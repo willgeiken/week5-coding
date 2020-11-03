@@ -84,3 +84,111 @@ t.test(chinstraps_m, chinstraps_f, alternative = "greater")
 #called a one-sided t-test
 ```
 
+## One-way ANOVA
+
+Compares means across more than 2 groups.
+
+## 1. Table of counts by species and sex 
+
+```{r}
+penguin_counts <- penguins %>% 
+  count(species, sex)
+
+penguin_counts
+```
+
+Create a subset of only female penguins
+
+```{r}
+penguin_f <- penguins %>% 
+  filter(sex == "female")
+
+ggplot(data = penguin_f, aes(x = flipper_length_mm)) +
+  geom_histogram(aes(fill = species)) +
+  facet_wrap(~species, scales = "free")
+
+#scales = free allows for individualized x and y axes
+
+ggplot(data = penguin_f, aes(sample = flipper_length_mm)) +
+  geom_qq(aes(color = species)) +
+  facet_wrap(~species, scales = "free")
+```
+
+### Find summary statistics and check for equal variances
+
+Starting from penguins_f, create a summary table that groups by species, and returns the following:
+
+-mean of flipper length
+-sd "
+-sample size
+-variance 'var'
+-standard error = sd/sqrt(n)
+
+```{r}
+penguins_summary <- penguin_f %>% 
+  group_by(species) %>% 
+  summarize(
+    mean_flipper_length = mean(flipper_length_mm),
+    sd_flipper_length = sd(flipper_length_mm),
+    sample_size = n(),
+    se_flipper_length = sd(flipper_length_mm)/sqrt(n()),
+    var_flipper_length = var(flipper_length_mm))
+
+#if largest variance is <4x your smallest variance, you're chilling and can run an ANOVA
+
+#Levene's test is cautionary because the larger your sample, the more likely your result is significant
+
+leveneTest(flipper_length_mm ~ species, data = penguin_f)
+#looks at variance in flipper length as a function of species
+
+#p > 0.05, so we retain our null hypothesis that the variances are close enough
+```
+
+### Beeswarm plot with mean +/- 1 sd
+
+```{r}
+ggplot() +
+  geom_beeswarm(data = penguin_f, 
+                aes(x = species, y = flipper_length_mm),
+                color = "gray70",
+                size = 3,
+                alpha = 0.5) +
+  geom_point(data = penguins_summary, aes(x = species, y = mean_flipper_length),
+             size = 4) +
+  geom_errorbar(data = penguins_summary,
+                aes(x = species, 
+                    ymax = mean_flipper_length + sd_flipper_length,
+                    ymin = mean_flipper_length - sd_flipper_length),
+                width = 0.1) +
+  theme_light()
+                
+#IF it's refering to a variable, it goes inside aes, if not, it goes outside.
+```
+
+### One-way ANOVA
+
+aov() by default runs a balanced ANOVA, usually if you have unequal sample sizes, you want to do a type 3 anova. We're doing both.
+
+```{r}
+penguin_aov <-
+  aov(flipper_length_mm ~ species, data = penguin_f)
+
+summary(penguin_aov)
+#F value is huge, so the variance between groups is very large, so P is small, so we can reject null that the means for all of these groups for the three penguin types are the same.
+
+#But we don't know what's different, so we need a post-hoc test
+
+TukeyHSD(penguin_aov)
+  #shows pairwise adjusted p-values. All are below 0.05, so it's likely that they are all from different populations
+
+#If we have very unbalanced design, you probably want to do an orthoganol/type 3 anova
+```
+
+Type III Anova with the car package:
+```{r}
+penguin_lm <- lm(flipper_length_mm ~ species, data = penguin_f)
+penguin_aov_t3 <- Anova(penguin_lm, type = "III")
+penguin_aov_t3
+#in this case, we had balanced design/similar sample sizes, so it gave us a similar result to the anova above
+```
+
