@@ -402,6 +402,60 @@ chinstraps %&gt;%
 ##   &lt;fct&gt;      &lt;dbl&gt;       &lt;dbl&gt;   &lt;dbl&gt;       &lt;int&gt;
 ## 1 female     3527.        3550    285.          34
 ## 2 male       3939.        3950    362.          34</code></pre>
+<p>Get vectors of body_mass_g for female and male chinstrap penguins separately</p>
+<pre class="r"><code>chinstraps_f &lt;- chinstraps %&gt;% 
+  filter(sex == &quot;female&quot;) %&gt;% 
+  pull(body_mass_g)
+
+chinstraps_m &lt;- chinstraps %&gt;% 
+  filter(sex == &quot;male&quot;) %&gt;% 
+  pull(body_mass_g)</code></pre>
+<div id="t-tests-a-couple-different-ways" class="section level3">
+<h3>T-tests, a couple different ways</h3>
+<ol style="list-style-type: decimal">
+<li>Is there a significant difference in body mass between male and female chinstrap penguins?</li>
+</ol>
+<pre class="r"><code>chinstrap_ttest &lt;- t.test(chinstraps_f, chinstraps_m)
+
+chinstrap_ttest</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  chinstraps_f and chinstraps_m
+## t = -5.2077, df = 62.575, p-value = 2.264e-06
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -569.7903 -253.7391
+## sample estimates:
+## mean of x mean of y 
+##  3527.206  3938.971</code></pre>
+<pre class="r"><code>cohen.d(chinstraps_f, chinstraps_m)</code></pre>
+<pre><code>## 
+## Cohen&#39;s d
+## 
+## d estimate: -1.263061 (large)
+## 95 percent confidence interval:
+##      lower      upper 
+## -1.7933879 -0.7327341</code></pre>
+<pre class="r"><code>#gives a magnitude of 1.26 which is considered large, meaning it&#39;s a clear difference between female and male mass</code></pre>
+<p>Are male chinstrap penguins significantly larger (body mass) than female chinstrap penguins?</p>
+<p>This means we’re concerned with only one tail of the distribution</p>
+<pre class="r"><code>t.test(chinstraps_m, chinstraps_f, alternative = &quot;greater&quot;)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  chinstraps_m and chinstraps_f
+## t = 5.2077, df = 62.575, p-value = 1.132e-06
+## alternative hypothesis: true difference in means is greater than 0
+## 95 percent confidence interval:
+##  279.7552      Inf
+## sample estimates:
+## mean of x mean of y 
+##  3938.971  3527.206</code></pre>
+<pre class="r"><code>#can add &quot;greater&quot; or &quot;less&quot; depending on which vector is listed first
+
+#called a one-sided t-test</code></pre>
+</div>
 </div>
 
 
